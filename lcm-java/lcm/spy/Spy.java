@@ -537,7 +537,7 @@ public class Spy
         }
 
         try {
-            new Spy(lcmurl);
+            new Spy("tcpq://localhost:7700");
         } catch (IOException ex) {
             System.out.println(ex);
         }
