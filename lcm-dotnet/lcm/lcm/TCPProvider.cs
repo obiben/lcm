@@ -321,8 +321,8 @@ namespace LCM.LCM
 					{
 						while (!exit)
 						{
-							int type = ins.ReadInt32();
-
+                            int type = ins.ReadInt32();
+                            
 							int channelLen = ins.ReadInt32();
 							byte[] channel = new byte[channelLen];
 							ReadInput(ins.BaseStream, channel, 0, channel.Length);
@@ -338,6 +338,10 @@ namespace LCM.LCM
 					{
 						// exit read loop so we'll create a new connection.
 					}
+                    catch (NotSupportedException)
+                    {
+                        // same
+                    }
 				}
 			}
 			

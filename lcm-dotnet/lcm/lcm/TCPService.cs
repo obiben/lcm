@@ -23,11 +23,11 @@ namespace LCM.LCM
 		public TCPService(int port)
 		{
 			TcpListener tempTCPListener;
-			tempTCPListener = new TcpListener(System.Net.Dns.GetHostAddresses(System.Net.Dns.GetHostName())[0], port);
+			tempTCPListener = new TcpListener(port);
 			tempTCPListener.Start();
 			serverSocket = tempTCPListener;
-            // serverSocket.setReuseAddress(true);
-            // serverSocket.setLoopbackMode(false); // true *disables* loopback
+            //serverSocket.setReuseAddress(true);
+            //serverSocket.setLoopbackMode(false); // true *disables* loopback
 			
 			acceptThread = new Thread(AcceptThreadRun);
             acceptThread.IsBackground = true;
@@ -235,9 +235,10 @@ namespace LCM.LCM
                         }
                     }
                 }
-                catch (IOException)
-                {
-                }
+                catch (IOException) { }
+                catch (ObjectDisposedException) { }
+                catch (InvalidOperationException) { }
+                catch (NotSupportedException) { }
             }
 
             /******************************* Helper methods *******************************/
