@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -23,11 +24,12 @@ namespace LCM.LCM
 		public TCPService(int port)
 		{
 			TcpListener tempTCPListener;
-			tempTCPListener = new TcpListener(System.Net.Dns.GetHostAddresses(System.Net.Dns.GetHostName())[0], port);
+            IPAddress localAddr = IPAddress.Parse("0.0.0.0");
+            tempTCPListener = new TcpListener(localAddr, port);
 			tempTCPListener.Start();
 			serverSocket = tempTCPListener;
-            // serverSocket.setReuseAddress(true);
-            // serverSocket.setLoopbackMode(false); // true *disables* loopback
+            //serverSocket.setReuseAddress(true);
+            //serverSocket.setLoopbackMode(false); // true *disables* loopback
 			
 			acceptThread = new Thread(AcceptThreadRun);
             acceptThread.IsBackground = true;
