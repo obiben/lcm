@@ -307,17 +307,26 @@ namespace LCM.LCM
 						
 						serverVersion = ins.ReadInt32();
 					}
-					catch (IOException)
-					{
+                    catch (IOException)
+                    {
                         Console.Error.WriteLine("LCM.TCPProvider: Unable to connect to " + provider.inetAddr + ":" + provider.inetPort);
-						TCPProvider.SafeSleep(500);
-						
-						// try connecting again.
-						continue;
-					}
-					
-					// read loop
-					try
+                        TCPProvider.SafeSleep(500);
+
+                        // try connecting again.
+                        continue;
+                    }
+                    catch (SocketException)
+                    {
+                        Console.Error.WriteLine("LCM.TCPProvider: Unable to connect to " + provider.inetAddr + ":" + provider.inetPort);
+                        TCPProvider.SafeSleep(500);
+
+                        // try connecting again.
+                        continue;
+                    }
+
+
+                    // read loop
+                    try
 					{
 						while (!exit)
 						{
@@ -334,11 +343,15 @@ namespace LCM.LCM
                             provider.lcm.ReceiveMessage(System.Text.Encoding.GetEncoding("US-ASCII").GetString(channel), data, 0, data.Length);
 						}
 					}
-					catch (IOException)
-					{
-						// exit read loop so we'll create a new connection.
-					}
-				}
+                    catch (IOException)
+                    {
+                        // exit read loop so we'll create a new connection.
+                    }
+                    catch (NotSupportedException)
+                    {
+                        // exit read loop so we'll create a new connection.
+                    }
+                }
 			}
 			
 			public void Close()

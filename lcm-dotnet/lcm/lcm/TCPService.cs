@@ -52,7 +52,7 @@ namespace LCM.LCM
 				double dt = (endtime - starttime) / 1000.0;
 				starttime = endtime;
 
-				Console.WriteLine("{0,10:N} : {1,10:N} kB/s, {2:D} clients", (endtime - inittime) / 1000.0, bytesCount / 1024.0 / dt, clients.Count);
+				Console.WriteLine("{0:yyyy-MM-dd HH:mm:ss.fff} : {1,10:N} kB/s, {2:D} clients", DateTime.Now, bytesCount / 1024.0 / dt, clients.Count);
 				bytesCount = 0;
 			}
 		}
