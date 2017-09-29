@@ -199,6 +199,9 @@ namespace LCM.LCM
                 catch (IOException)
                 {
                 }
+                catch (InvalidOperationException)
+                {
+                }
 
                 // Something bad happened, close this connection.
                 try

@@ -351,6 +351,10 @@ namespace LCM.LCM
                     {
                         // exit read loop so we'll create a new connection.
                     }
+                    catch (ObjectDisposedException)
+                    {
+                        // exit read loop so we'll create a new connection.
+                    }
                 }
 			}
 			
