@@ -114,7 +114,7 @@ const char *make_fqn_csharp(lcmgen_t *lcm, const char *type_name)
 static void freplace(FILE *f, const char *haystack, const char *replace1)
 {
     int len = strlen(haystack);
-    
+
     for (int pos = 0; pos < len; pos++)
     {
         if (haystack[pos]=='#')
@@ -144,7 +144,7 @@ static void make_accessor(lcm_member_t *lm, const char *obj, char *s)
 	}
 }
 
-static int struct_has_string_member(lcm_struct_t *lr) 
+static int struct_has_string_member(lcm_struct_t *lr)
 {
     for (unsigned int member = 0; member < g_ptr_array_size(lr->members); member++) {
         lcm_member_t *lm = (lcm_member_t *) g_ptr_array_index(lr->members, member);
@@ -168,24 +168,24 @@ int emit_csharp(lcmgen_t *lcm)
 {
     GHashTable *type_table = g_hash_table_new(g_str_hash, g_str_equal);
 
-    g_hash_table_insert(type_table, "byte",   prim("byte",  
-                                             "# = ins.ReadByte();",  
+    g_hash_table_insert(type_table, "byte",   prim("byte",
+                                             "# = ins.ReadByte();",
                                              "outs.Write(#);"));
-    g_hash_table_insert(type_table, "int8_t",   prim("byte",  
-                                               "# = ins.ReadByte();",  
+    g_hash_table_insert(type_table, "int8_t",   prim("byte",
+                                               "# = ins.ReadByte();",
                                                "outs.Write(#);"));
-    g_hash_table_insert(type_table, "int16_t",  prim("short", 
-                                               "# = ins.ReadInt16();", 
+    g_hash_table_insert(type_table, "int16_t",  prim("short",
+                                               "# = ins.ReadInt16();",
                                                "outs.Write(#);"));
-    g_hash_table_insert(type_table, "int32_t",  prim("int",   
+    g_hash_table_insert(type_table, "int32_t",  prim("int",
                                                "# = ins.ReadInt32();",
                                                "outs.Write(#);"));
-    g_hash_table_insert(type_table, "int64_t",  prim("long",  
-                                               "# = ins.ReadInt64();",  
+    g_hash_table_insert(type_table, "int64_t",  prim("long",
+                                               "# = ins.ReadInt64();",
                                                "outs.Write(#);"));
     g_hash_table_insert(type_table, "string",   prim("String",
-                                               "__strbuf = new byte[ins.ReadInt32()-1]; ins.ReadFully(__strbuf); ins.ReadByte(); # = System.Text.Encoding.GetEncoding(\"US-ASCII\").GetString(__strbuf);",
-                                               "__strbuf = System.Text.Encoding.GetEncoding(\"US-ASCII\").GetBytes(#); outs.Write(__strbuf.Length+1); outs.Write(__strbuf, 0, __strbuf.Length); outs.Write((byte) 0);"));
+                                               "__strbuf = new byte[ins.ReadInt32()-1]; ins.ReadFully(__strbuf); ins.ReadByte(); # = System.Text.Encoding.GetEncoding(\"UTF-8\").GetString(__strbuf);",
+                                               "__strbuf = System.Text.Encoding.GetEncoding(\"UTF-8\").GetBytes(#); outs.Write(__strbuf.Length+1); outs.Write(__strbuf, 0, __strbuf.Length); outs.Write((byte) 0);"));
     g_hash_table_insert(type_table, "boolean",  prim("bool",
                                                "# = ins.ReadBoolean();",
                                                "outs.Write(#);"));
@@ -195,14 +195,14 @@ int emit_csharp(lcmgen_t *lcm)
     g_hash_table_insert(type_table, "double",   prim("double",
                                                "# = ins.ReadDouble();",
                                                "outs.Write(#);"));
-    
+
     //////////////////////////////////////////////////////////////
     // ENUMS
     for (unsigned int en = 0; en < g_ptr_array_size(lcm->enums); en++) {
         lcm_enum_t *le = (lcm_enum_t *) g_ptr_array_index(lcm->enums, en);
-        
+
         const char *classname = make_fqn_csharp(lcm, le->enumname->lctypename);
-        char *path = g_strdup_printf("%s%s%s.cs", 
+        char *path = g_strdup_printf("%s%s%s.cs",
                                   getopt_get_string(lcm->gopt, "csharp-path"),
                                   strlen(getopt_get_string(lcm->gopt, "csharp-path")) > 0 ? G_DIR_SEPARATOR_S : "",
 								  dots_to_slashes((getopt_get_bool(lcm->gopt, "csharp-strip-dirs") ? le->enumname->lctypename : classname)));
@@ -248,7 +248,7 @@ int emit_csharp(lcmgen_t *lcm)
         }
         emit(0," ");
 
-        emit(2,"public %s(int value) { this.value = value; }", 
+        emit(2,"public %s(int value) { this.value = value; }",
                 le->enumname->shortname);
         emit(0," ");
 
@@ -307,13 +307,13 @@ int emit_csharp(lcmgen_t *lcm)
         emit(0, "}");
         fclose(f);
     }
-    
+
     for (unsigned int st = 0; st < g_ptr_array_size(lcm->structs); st++) {
         lcm_struct_t *lr = (lcm_struct_t *) g_ptr_array_index(lcm->structs, st);
 
         const char *classname = make_fqn_csharp(lcm, lr->structname->lctypename);
-        char *path = g_strdup_printf("%s%s%s.cs", 
-                                  getopt_get_string(lcm->gopt, "csharp-path"), 
+        char *path = g_strdup_printf("%s%s%s.cs",
+                                  getopt_get_string(lcm->gopt, "csharp-path"),
                                   strlen(getopt_get_string(lcm->gopt, "csharp-path")) > 0 ? "/" : "",
 								  dots_to_slashes((getopt_get_bool(lcm->gopt, "csharp-strip-dirs") ? lr->structname->lctypename : classname)));
 
@@ -331,13 +331,13 @@ int emit_csharp(lcmgen_t *lcm)
                 " * This file was automatically generated by lcm-gen\n"
                 " * DO NOT MODIFY BY HAND!!!!\n"
                 " */\n");
-        
+
         emit(0, "using System;");
         emit(0, "using System.Collections.Generic;");
         emit(0, "using System.IO;");
         emit(0, "using LCM.LCM;");
         emit(0, " ");
-        
+
 		char *root_nsp = getopt_get_string(lcm->gopt, "csharp-root-nsp");
         if (strlen(lr->structname->package) > 0)
             emit(0, "namespace %s%s%s", root_nsp, (root_nsp[0] == 0 ? "" : "."), lr->structname->package);
@@ -359,7 +359,7 @@ int emit_csharp(lcmgen_t *lcm)
             primitive_info_t *pinfo = (primitive_info_t*) g_hash_table_lookup(type_table, lm->type->lctypename);
 
             emit_start(2, "public ");
-            
+
             if (pinfo==NULL)  {
                 emit_continue("%s", make_fqn_csharp(lcm, lm->type->lctypename));
             } else {
@@ -393,9 +393,9 @@ int emit_csharp(lcmgen_t *lcm)
             emit_start(3, "%s = new ", lm->membername);
             if (pinfo != NULL)
                 emit_continue("%s", pinfo->storage);
-            else 
+            else
                 emit_continue("%s", make_fqn_csharp(lcm, lm->type->lctypename));
-      
+
 			emit_continue("[");
             for (unsigned int i = 0; i < g_ptr_array_size(lm->dimensions); i++) {
                 lcm_dimension_t *dim = (lcm_dimension_t*) g_ptr_array_index(lm->dimensions, i);
@@ -489,16 +489,16 @@ int emit_csharp(lcmgen_t *lcm)
 
             for (unsigned int i = 0; i < g_ptr_array_size(lm->dimensions); i++) {
                 lcm_dimension_t *dim = (lcm_dimension_t*) g_ptr_array_index(lm->dimensions, i);
-                emit(3+i, "for (int %c = 0; %c < %s%s; %c++) {", 
+                emit(3+i, "for (int %c = 0; %c < %s%s; %c++) {",
                         'a'+i, 'a'+i, dim_size_prefix(dim->size), dim->size, 'a'+i);
             }
-            
+
             emit_start(3 + g_ptr_array_size(lm->dimensions),"");
             if (pinfo != NULL)
                 freplace(f, pinfo->encode, accessor);
             else
                 freplace(f, "#._encodeRecursive(outs);", accessor);
-            emit_end(" ");                
+            emit_end(" ");
 
             for (unsigned int i = 0; i < g_ptr_array_size(lm->dimensions); i++) {
                 emit(3 + g_ptr_array_size(lm->dimensions) - i - 1, "}");
@@ -569,12 +569,12 @@ int emit_csharp(lcmgen_t *lcm)
 
             for (unsigned int i = 0; i < g_ptr_array_size(lm->dimensions); i++) {
                 lcm_dimension_t *dim = (lcm_dimension_t*) g_ptr_array_index(lm->dimensions, i);
-                emit(3+i, "for (int %c = 0; %c < %s%s; %c++) {", 
+                emit(3+i, "for (int %c = 0; %c < %s%s; %c++) {",
                         'a'+i, 'a'+i, dim_size_prefix(dim->size), dim->size, 'a'+i);
             }
-            
+
             emit_start(3 + g_ptr_array_size(lm->dimensions),"");
-            if (pinfo != NULL) 
+            if (pinfo != NULL)
                 freplace(f, pinfo->decode, accessor);
             else {
                 emit_continue("%s = %s._decodeRecursiveFactory(ins);", accessor, make_fqn_csharp(lcm, lm->type->lctypename));
@@ -630,10 +630,10 @@ int emit_csharp(lcmgen_t *lcm)
 
             for (unsigned int i = 0; i < g_ptr_array_size(lm->dimensions); i++) {
                 lcm_dimension_t *dim = (lcm_dimension_t*) g_ptr_array_index(lm->dimensions, i);
-                emit(3+i, "for (int %c = 0; %c < %s%s; %c++) {", 
+                emit(3+i, "for (int %c = 0; %c < %s%s; %c++) {",
                         'a'+i, 'a'+i, dim_size_prefix(dim->size), dim->size, 'a'+i);
             }
-            
+
             if (pinfo != NULL) {
 
 				emit_start(3+g_ptr_array_size(lm->dimensions), "outobj.%s", lm->membername);
@@ -661,7 +661,7 @@ int emit_csharp(lcmgen_t *lcm)
 				}
 
                 emit_end(";");
-                
+
             } else {
                 emit(3 + g_ptr_array_size(lm->dimensions), "outobj.%s = this.%s.Copy();", accessor, accessor);
             }
@@ -681,9 +681,9 @@ int emit_csharp(lcmgen_t *lcm)
         emit(0, "}\n");
         fclose(f);
     }
- 
+
 /* XXX unfinished
-   
+
     hashtable_iterator_t *hit = hashtable_iterator_create(type_table);
     hashtable_entry_t *entry;
     while ((entry = hashtable_iterator_next(hit)) != NULL) {
