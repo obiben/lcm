@@ -115,6 +115,19 @@ namespace LCM.LCM
                     this.regex = regex;
                     this.pat = new Regex(regex);
                 }
+
+                public override bool Equals(object obj)
+                {
+                    SubscriptionRecord rec = obj as SubscriptionRecord;
+                    if (rec == null) return false;
+
+                    return rec.regex == regex;
+                }
+
+                public override int GetHashCode()
+                {
+                    return regex.GetHashCode();
+                }
             }
 
             List<SubscriptionRecord> subscriptions = new List<SubscriptionRecord>();
@@ -171,8 +184,12 @@ namespace LCM.LCM
 
                             lock (subscriptions)
                             {
-                                subscriptions.Add(new SubscriptionRecord(
-                                    System.Text.Encoding.GetEncoding("US-ASCII").GetString(channel)));
+                                SubscriptionRecord s = 
+                                    new SubscriptionRecord(
+                                        System.Text.Encoding.GetEncoding("US-ASCII").GetString(channel)
+                                    );
+                                if (!subscriptions.Contains(s))
+                                    subscriptions.Add(s);
                             }
                         }
                         else if (type == TCPProvider.MESSAGE_TYPE_UNSUBSCRIBE)

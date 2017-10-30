@@ -71,11 +71,23 @@ namespace LCM.LCM
 			
 		}
 
-		/// <summary>
+        // <summary>
+        // Event fired when a TCP connection is established. Sends string with format
+        // {ip}:{port} as argument
+        // </summary>
+        public event EventHandler<string> Connected;
+
+        // <summary>
+        // Event fired when a TCP connection problem is detected. Sends string with
+        // format {ip}:{port} as argument
+        // </summary>
+        public event EventHandler<string> Disconnected;
+
+        /// <summary>
         /// Create a new LCM object, connecting to one or more URLs. If
-		/// no URL is specified, the environment variable LCM_DEFAULT_URL is
-		/// used. If that environment variable is not defined, then the
-		/// default URL is used.
+        /// no URL is specified, the environment variable LCM_DEFAULT_URL is
+        /// used. If that environment variable is not defined, then the
+        /// default URL is used.
         /// </summary>
         /// <param name="urls">URL array</param>
         public LCM(params string[] urls)
@@ -105,7 +117,10 @@ namespace LCM.LCM
                 }
                 else if (protocol.Equals("tcpq"))
                 {
-                    providers.Add(new TCPProvider(this, up));
+                    TCPProvider prov = new TCPProvider(this, up);
+                    prov.Connected += OnTCPConnected;
+                    prov.Disconnected += OnTCPDisconnected;
+                    providers.Add(prov);
                 }/*
                 else if (protocol.Equals("file"))
                 {
@@ -117,6 +132,23 @@ namespace LCM.LCM
                 }
 			}
 		}
+
+
+        // <summary>
+        // forwards TCP connection event from a provider
+        // </summary>
+        private void OnTCPConnected(object sender, string addr)
+        {
+            Connected?.Invoke(sender, addr);
+        }
+
+        // <summary>
+        // forwards TCP disconnection event from a provider
+        // </summary>
+        private void OnTCPDisconnected(object sender, string addr)
+        {
+            Disconnected?.Invoke(sender, addr);
+        }
 		
 		/// <summary>
         /// Publish a string on a channel. This method does not use the
@@ -223,19 +255,22 @@ namespace LCM.LCM
 			
 			lock (subscriptions)
 			{
-                subscriptions.Add(srec);
-                List<SubscriptionRecord> subs;
-				
-				foreach (string channel in subscriptionsMap.Keys)
-				{
-					if (srec.pat.IsMatch(channel))
+                if (!subscriptions.Exists(s => s.regex == srec.regex && s.lcsub == srec.lcsub))
+                {
+                    subscriptions.Add(srec);
+                    List<SubscriptionRecord> subs;
+
+                    foreach (string channel in subscriptionsMap.Keys)
                     {
-                        if (subscriptionsMap.TryGetValue(channel, out subs))
+                        if (srec.pat.IsMatch(channel))
                         {
-                            subs.Add(srec);
+                            if (subscriptionsMap.TryGetValue(channel, out subs))
+                            {
+                                subs.Add(srec);
+                            }
                         }
-					}
-				}
+                    }
+                }
 			}
 		}
 		

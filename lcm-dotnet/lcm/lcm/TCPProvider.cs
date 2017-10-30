@@ -49,6 +49,10 @@ namespace LCM.LCM
         {
             get { return inetPort; }
         }
+
+        /* Events */
+        public event EventHandler<string> Connected;
+        public event EventHandler<string> Disconnected;
 		
         /* Methods */
         /// <summary>
@@ -78,8 +82,28 @@ namespace LCM.LCM
 			}
 			
 			reader = new ReaderThread(this);
+
+            reader.Connected += OnConnect;
+            reader.Disconnected += OnDisconnect;
+
 			reader.Start();
 		}
+
+        // <summary>
+        // forwards TCP disconnection event from a reader
+        // </summary>
+        private void OnDisconnect(object sender, EventArgs e)
+        {
+            Disconnected?.Invoke(this, string.Format("{0}:{1}", InetAddr, InetPort));
+        }
+
+        // <summary>
+        // forwards TCP connection event from a reader
+        // </summary>
+        private void OnConnect(object sender, EventArgs e)
+        {
+            Connected?.Invoke(this, string.Format("{0}:{1}", InetAddr, InetPort));
+        }
 
         /// <summary>
         /// Publish a message synchronously. However, if the server is not available, it will return immediately.
@@ -88,7 +112,7 @@ namespace LCM.LCM
         /// <param name="data">data byte array</param>
         /// <param name="offset">offset of the data to write</param>
         /// <param name="length">length of the data to write</param>
-		public virtual void Publish(string channel, byte[] data, int offset, int length)
+        public virtual void Publish(string channel, byte[] data, int offset, int length)
 		{
 			lock (this)
 			{
@@ -254,6 +278,11 @@ namespace LCM.LCM
 
         private class ReaderThread
 		{
+            /* Events */
+            public event EventHandler Connected;
+            public event EventHandler Disconnected;
+
+            /* Private */
             private TcpClient sock;
             private BinaryReader ins;
             private Stream outs;
@@ -262,6 +291,7 @@ namespace LCM.LCM
             private Thread thread;
             private TCPProvider provider;
 
+            /* Public */
             public Stream OutputStream
 			{
 				get { return outs; }
@@ -306,9 +336,12 @@ namespace LCM.LCM
 						}
 						
 						serverVersion = ins.ReadInt32();
+
+                        Connected?.Invoke(this, EventArgs.Empty);
 					}
                     catch (IOException)
                     {
+                        Disconnected?.Invoke(this, EventArgs.Empty);
                         Console.Error.WriteLine("LCM.TCPProvider: Unable to connect to " + provider.inetAddr + ":" + provider.inetPort);
                         TCPProvider.SafeSleep(500);
 
@@ -317,6 +350,7 @@ namespace LCM.LCM
                     }
                     catch (SocketException)
                     {
+                        Disconnected?.Invoke(this, EventArgs.Empty);
                         Console.Error.WriteLine("LCM.TCPProvider: Unable to connect to " + provider.inetAddr + ":" + provider.inetPort);
                         TCPProvider.SafeSleep(500);
 
@@ -345,18 +379,22 @@ namespace LCM.LCM
 					}
                     catch (IOException)
                     {
+                        Disconnected?.Invoke(this, EventArgs.Empty);
                         // exit read loop so we'll create a new connection.
                     }
                     catch (NotSupportedException)
                     {
+                        Disconnected?.Invoke(this, EventArgs.Empty);
                         // exit read loop so we'll create a new connection.
                     }
                     catch (ObjectDisposedException)
                     {
+                        Disconnected?.Invoke(this, EventArgs.Empty);
                         // exit read loop so we'll create a new connection.
                     }
                 }
-			}
+                Disconnected?.Invoke(this, EventArgs.Empty);
+            }
 			
 			public void Close()
 			{
