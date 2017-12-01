@@ -250,43 +250,35 @@ namespace LCM.LCM
 
             public void SendWorker()
             {
-                try
+                while (!sendQueue.IsAddingCompleted)
                 {
-                    while (true)
+                    Message msg;
+                    if (sendQueue.TryTake(out msg, 10))
                     {
-                        Message msg;
-                        if (sendQueue.TryTake(out msg, 10))
+                        try
                         {
-                            try
+                            lock (subscriptions)
                             {
-                                lock (subscriptions)
+                                foreach (SubscriptionRecord sr in subscriptions)
                                 {
-                                    foreach (SubscriptionRecord sr in subscriptions)
+                                    if (sr.pat.IsMatch(msg.ChannelString))
                                     {
-                                        if (sr.pat.IsMatch(msg.ChannelString))
-                                        {
-                                            outs.Write(TCPProvider.MESSAGE_TYPE_PUBLISH);
-                                            outs.Write(msg.Channel.Length);
-                                            outs.Write(msg.Channel);
-                                            outs.Write(msg.Data.Length);
-                                            outs.Write(msg.Data);
-                                            outs.Flush();
+                                        outs.Write(TCPProvider.MESSAGE_TYPE_PUBLISH);
+                                        outs.Write(msg.Channel.Length);
+                                        outs.Write(msg.Channel);
+                                        outs.Write(msg.Data.Length);
+                                        outs.Write(msg.Data);
+                                        outs.Flush();
 
-                                            break; 
-                                        }
+                                        break; 
                                     }
                                 }
                             }
-                            catch (IOException)
-                            {
-                            }
+                        }
+                        catch (IOException)
+                        {
                         }
                     }
-                }
-                catch (InvalidOperationException)
-                {
-                    //collection was completed
-                    return;
                 }
             }
 
