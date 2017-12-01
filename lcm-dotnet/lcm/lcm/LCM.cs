@@ -14,6 +14,11 @@ namespace LCM.LCM
             internal string regex;
             internal Regex pat;
             internal LCMSubscriber lcsub;
+
+            public override string ToString()
+            {
+                return string.Format("{0} for {1}", regex, lcsub);
+            }
         }
 
         private List<SubscriptionRecord> subscriptions = new List<SubscriptionRecord>();
@@ -260,6 +265,8 @@ namespace LCM.LCM
                     subscriptions.Add(srec);
                     List<SubscriptionRecord> subs;
 
+                    Console.WriteLine("Subscribing: {0}", srec);
+
                     foreach (string channel in subscriptionsMap.Keys)
                     {
                         if (srec.pat.IsMatch(channel))
@@ -299,7 +306,9 @@ namespace LCM.LCM
             {
                 throw new SystemException();
             }
-			
+
+            Console.WriteLine("Unsubscribing: {0}", regex);
+
             lock (this)
             {
                 foreach (Provider p in providers)
