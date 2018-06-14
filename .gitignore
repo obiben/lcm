@@ -1,5 +1,11 @@
 build/*
 lcm-dotnet/bin/*
-*/obj/*
-*/.vs/*
 .vs/*
+obj/*
+bin/*
+*/.vs/*
+*/obj/*
+*/bin/*
+examples/*
+lcm-dotnet/lcm-server/obj/*
+lcm-dotnet/lcm/obj/*
