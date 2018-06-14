@@ -112,14 +112,14 @@ _recv_uint32(int fd, uint32_t *result)
     uint32_t v;
     if(_recv_fully(fd, &v, 4) != 4)
         return -1;
-    *result = ntohl(v);
+    *result = v;
     return 0;
 }
 
 static int
 _send_uint32(int fd, uint32_t v)
 {
-    uint32_t n = htonl(v);
+    uint32_t n = v;
     return (_send_fully(fd, &n, 4) == 4) ? 0 : -1;
 }
 
@@ -174,6 +174,7 @@ _connect_to_server(lcm_tcpq_t *self)
 
     if(server_magic != MAGIC_SERVER) {
         fprintf(stderr, "LCM tcpq: Invalid response from server\n");
+        fprintf(stderr, "LCM Server magic received: %d \n", server_magic);
         goto fail;
     }
 

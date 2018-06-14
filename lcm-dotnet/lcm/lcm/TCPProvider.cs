@@ -364,8 +364,8 @@ namespace LCM.LCM
 					{
 						while (!exit)
 						{
-							int type = ins.ReadInt32();
-
+                            int type = ins.ReadInt32();
+                            
 							int channelLen = ins.ReadInt32();
 							byte[] channel = new byte[channelLen];
 							ReadInput(ins.BaseStream, channel, 0, channel.Length);
@@ -379,18 +379,19 @@ namespace LCM.LCM
 					}
                     catch (IOException)
                     {
-                        Disconnected?.Invoke(this, EventArgs.Empty);
                         // exit read loop so we'll create a new connection.
                     }
                     catch (NotSupportedException)
                     {
-                        Disconnected?.Invoke(this, EventArgs.Empty);
                         // exit read loop so we'll create a new connection.
                     }
                     catch (ObjectDisposedException)
                     {
-                        Disconnected?.Invoke(this, EventArgs.Empty);
                         // exit read loop so we'll create a new connection.
+                    }
+                    finally
+                    {
+                        Disconnected?.Invoke(this, EventArgs.Empty);
                     }
                 }
                 Disconnected?.Invoke(this, EventArgs.Empty);

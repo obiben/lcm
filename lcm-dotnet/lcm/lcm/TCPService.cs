@@ -27,6 +27,7 @@ namespace LCM.LCM
 			TcpListener tempTCPListener;
             IPAddress localAddr = IPAddress.Parse("0.0.0.0");
             tempTCPListener = new TcpListener(localAddr, port);
+
 			tempTCPListener.Start();
 			serverSocket = tempTCPListener;
             //serverSocket.setReuseAddress(true);
@@ -275,9 +276,10 @@ namespace LCM.LCM
                                 }
                             }
                         }
-                        catch (IOException)
-                        {
-                        }
+                        catch (IOException) { }
+                        catch (ObjectDisposedException) { }
+                        catch (InvalidOperationException) { }
+                        catch (NotSupportedException) { }
                     }
                 }
             }
