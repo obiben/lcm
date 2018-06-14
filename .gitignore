@@ -1,0 +1,5 @@
+build/*
+lcm-dotnet/bin/*
+*/obj/*
+*/.vs/*
+.vs/*
