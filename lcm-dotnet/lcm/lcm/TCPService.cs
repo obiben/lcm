@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -105,6 +106,9 @@ namespace LCM.LCM
             private BinaryWriter outs;
             private Thread thread;
 
+            private Thread sendThread;
+            private BlockingCollection<Message> sendQueue;
+
             private class SubscriptionRecord
             {
                 internal string regex;
@@ -146,6 +150,14 @@ namespace LCM.LCM
 
             public void Start()
             {
+                if (sendThread == null)
+                {
+                    sendQueue = new BlockingCollection<Message>();
+                    sendThread = new Thread(SendWorker);
+                    sendThread.IsBackground = true;
+                    sendThread.Start();
+                }
+
                 if (thread == null)
                 {
                     thread = new Thread(Run);
@@ -233,33 +245,56 @@ namespace LCM.LCM
                 {
                     service.clients.Remove(this);
                 }
+                sendQueue.CompleteAdding();
+            }
+
+            public void SendWorker()
+            {
+                while (!sendQueue.IsAddingCompleted)
+                {
+                    Message msg;
+                    if (sendQueue.TryTake(out msg, 10))
+                    {
+                        try
+                        {
+                            lock (subscriptions)
+                            {
+                                foreach (SubscriptionRecord sr in subscriptions)
+                                {
+                                    if (sr.pat.IsMatch(msg.ChannelString))
+                                    {
+                                        outs.Write(TCPProvider.MESSAGE_TYPE_PUBLISH);
+                                        outs.Write(msg.Channel.Length);
+                                        outs.Write(msg.Channel);
+                                        outs.Write(msg.Data.Length);
+                                        outs.Write(msg.Data);
+                                        outs.Flush();
+
+                                        break; 
+                                    }
+                                }
+                            }
+                        }
+                        catch (IOException)
+                        {
+                        }
+                    }
+                }
             }
 
             public virtual void Send(string chanstr, byte[] channel, byte[] data)
             {
                 try
                 {
-                    lock (subscriptions)
+                    //Console.WriteLine("Queueing");
+                    sendQueue.Add(new Message
                     {
-                        foreach (SubscriptionRecord sr in subscriptions)
-                        {
-                            if (sr.pat.IsMatch(chanstr))
-                            {
-                                outs.Write(TCPProvider.MESSAGE_TYPE_PUBLISH);
-                                outs.Write(channel.Length);
-                                outs.Write(channel);
-                                outs.Write(data.Length);
-                                outs.Write(data);
-                                outs.Flush();
-
-                                return;
-                            }
-                        }
-                    }
+                        ChannelString = chanstr,
+                        Channel = channel,
+                        Data = data
+                    });
                 }
-                catch (IOException)
-                {
-                }
+                catch (InvalidOperationException) { return; }
             }
 
             /******************************* Helper methods *******************************/
@@ -294,6 +329,13 @@ namespace LCM.LCM
                         
 		        return bytesRead;
 	        }
+
+            private class Message
+            {
+                public string ChannelString { get; set; }
+                public byte[] Channel { get; set; }
+                public byte[] Data { get; set; }
+            }
         }
 	}
 }
