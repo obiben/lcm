@@ -389,6 +389,10 @@ namespace LCM.LCM
                     {
                         // exit read loop so we'll create a new connection.
                     }
+                    catch (OverflowException)
+                    {
+                        // exit read loop so we'll create a new connection.
+                    }
                     finally
                     {
                         Disconnected?.Invoke(this, EventArgs.Empty);

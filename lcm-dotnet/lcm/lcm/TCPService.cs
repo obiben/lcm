@@ -197,12 +197,22 @@ namespace LCM.LCM
 
                             lock (subscriptions)
                             {
+                                string s_channel = System.Text.Encoding.GetEncoding("US-ASCII").GetString(channel);
                                 SubscriptionRecord s = 
                                     new SubscriptionRecord(
-                                        System.Text.Encoding.GetEncoding("US-ASCII").GetString(channel)
+                                        s_channel
                                     );
+                                Console.WriteLine("Subscribe: {0}", s_channel);
                                 if (!subscriptions.Contains(s))
+                                {
+                                    Console.WriteLine("Adding subscription");
                                     subscriptions.Add(s);
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Already subscribed");
+                                }
+                                    
                             }
                         }
                         else if (type == TCPProvider.MESSAGE_TYPE_UNSUBSCRIBE)
