@@ -365,16 +365,24 @@ namespace LCM.LCM
 						while (!exit)
 						{
                             int type = ins.ReadInt32();
-                            
-							int channelLen = ins.ReadInt32();
-							byte[] channel = new byte[channelLen];
-							ReadInput(ins.BaseStream, channel, 0, channel.Length);
 
-							int dataLen = ins.ReadInt32();
-							byte[] data = new byte[dataLen];
-							ReadInput(ins.BaseStream, data, 0, data.Length);
+                            if (type == MESSAGE_TYPE_PUBLISH || type == MESSAGE_TYPE_SUBSCRIBE || type == MESSAGE_TYPE_UNSUBSCRIBE)
+                            {
+                                int channelLen = ins.ReadInt32();
+                                byte[] channel = new byte[channelLen];
+                                ReadInput(ins.BaseStream, channel, 0, channel.Length);
 
-                            provider.lcm.ReceiveMessage(System.Text.Encoding.GetEncoding("US-ASCII").GetString(channel), data, 0, data.Length);
+                                int dataLen = ins.ReadInt32();
+                                byte[] data = new byte[dataLen];
+                                ReadInput(ins.BaseStream, data, 0, data.Length);
+
+                                provider.lcm.ReceiveMessage(System.Text.Encoding.GetEncoding("US-ASCII").GetString(channel), data, 0, data.Length);
+                            }
+                            else
+                            {
+                                Console.Error.WriteLine("LCM.TCPProvider: Bad message type ({0}), throwing message away and reconnecting", type);
+                                break;
+                            }
 						}
 					}
                     catch (IOException)
@@ -395,9 +403,11 @@ namespace LCM.LCM
                     }
                     finally
                     {
+                        Console.WriteLine("Error in TCPProvider's reader loop, reconnecting");
                         Disconnected?.Invoke(this, EventArgs.Empty);
                     }
                 }
+                Console.WriteLine("Exiting in TCPProvider's reader loop");
                 Disconnected?.Invoke(this, EventArgs.Empty);
             }
 			
