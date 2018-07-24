@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
@@ -109,6 +110,8 @@ namespace LCM.LCM
 
             private Thread sendThread;
             private BlockingCollection<Message> sendQueue;
+
+            const int maxQueueLenth = 5000;
 
             private class SubscriptionRecord
             {
@@ -242,6 +245,12 @@ namespace LCM.LCM
                 catch (InvalidOperationException)
                 {
                 }
+                catch (SendQueueFullException)
+                {
+                    Console.WriteLine(((IPEndPoint)sock.Client.RemoteEndPoint).Address.ToString());
+                    Console.WriteLine("Send queue was full, closing socket - subscriptions were: ");
+                    Console.WriteLine(string.Join(", ", subscriptions.Select(s => s.regex)));
+                }
 
                 // Something bad happened, close this connection.
                 try
@@ -296,9 +305,10 @@ namespace LCM.LCM
 
             public virtual void Send(string chanstr, byte[] channel, byte[] data)
             {
+                if (sendQueue.Count > maxQueueLenth) throw new SendQueueFullException();
+
                 try
                 {
-                    //Console.WriteLine("Queueing");
                     sendQueue.Add(new Message
                     {
                         ChannelString = chanstr,
@@ -350,4 +360,6 @@ namespace LCM.LCM
             }
         }
 	}
+
+    class SendQueueFullException : Exception { }
 }
