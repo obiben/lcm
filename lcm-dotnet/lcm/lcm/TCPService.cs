@@ -111,7 +111,7 @@ namespace LCM.LCM
             private Thread sendThread;
             private BlockingCollection<Message> sendQueue;
 
-            const int maxQueueLenth = 5000;
+            const int maxQueueLenth = 15000;
 
             private class SubscriptionRecord
             {
