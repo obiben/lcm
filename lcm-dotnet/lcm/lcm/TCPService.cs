@@ -178,9 +178,15 @@ namespace LCM.LCM
                     while (true)
                     {
                         int type = ins.ReadInt32();
+                        int channellen = ins.ReadInt32();
+                        if (channellen > 1000)
+                        {
+                            Console.WriteLine("Message's channel size over 1000 bytes closing client");
+                            Console.WriteLine(((IPEndPoint)sock.Client.RemoteEndPoint).Address.ToString());
+                            break;
+                        }
                         if (type == TCPProvider.MESSAGE_TYPE_PUBLISH)
                         {
-                            int channellen = ins.ReadInt32();
                             byte[] channel = new byte[channellen];
                             ReadInput(ins.BaseStream, channel, 0, channel.Length);
 
@@ -194,7 +200,6 @@ namespace LCM.LCM
                         }
                         else if (type == TCPProvider.MESSAGE_TYPE_SUBSCRIBE)
                         {
-                            int channellen = ins.ReadInt32();
                             byte[] channel = new byte[channellen];
                             ReadInput(ins.BaseStream, channel, 0, channel.Length);
 
@@ -220,7 +225,6 @@ namespace LCM.LCM
                         }
                         else if (type == TCPProvider.MESSAGE_TYPE_UNSUBSCRIBE)
                         {
-                            int channellen = ins.ReadInt32();
                             byte[] channel = new byte[channellen];
                             ReadInput(ins.BaseStream, channel, 0, channel.Length);
 
@@ -251,6 +255,12 @@ namespace LCM.LCM
                     Console.WriteLine("Send queue was full, closing socket - subscriptions were: ");
                     Console.WriteLine(string.Join(", ", subscriptions.Select(s => s.regex)));
                 }
+                catch (OverflowException e)
+                {
+                    Console.WriteLine(e.ToString());
+                    Console.WriteLine(((IPEndPoint)sock.Client.RemoteEndPoint).Address.ToString());
+                }
+
 
                 // Something bad happened, close this connection.
                 try
