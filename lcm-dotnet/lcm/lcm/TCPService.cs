@@ -73,8 +73,16 @@ namespace LCM.LCM
 			{
 				foreach (ClientThread client in clients)
 				{
-					client.Send(chanstr, channel, data);
-				}
+				    try
+				    {
+				        client.Send(chanstr, channel, data);
+				    }
+				    catch (SendQueueFullException)
+				    {
+				        Console.WriteLine($"Send queue was full, closing socket {client.Address}");
+				        client.Stop();
+				    }
+                }
 			}
 		}
 		
@@ -111,7 +119,11 @@ namespace LCM.LCM
             private Thread sendThread;
             private BlockingCollection<Message> sendQueue;
 
-            const int maxQueueLenth = 15000;
+            private bool running = true;
+
+            const int maxQueueLenth = 30000;
+
+            public string Address { get; private set; }
 
             private class SubscriptionRecord
             {
@@ -144,7 +156,7 @@ namespace LCM.LCM
             {
                 this.service = service;
                 this.sock = sock;
-
+                Address = ((IPEndPoint) sock.Client.RemoteEndPoint).Address.ToString();
                 ins = new BinaryReader(sock.GetStream());
                 outs = new BinaryWriter(sock.GetStream());
 
@@ -170,19 +182,23 @@ namespace LCM.LCM
                 }
             }
 
+            public void Stop()
+            {
+                running = false;
+            }
+
             public void Run()
             {
                 // read messages until something bad happens.
                 try
                 {
-                    while (true)
+                    while (running)
                     {
                         int type = ins.ReadInt32();
                         int channellen = ins.ReadInt32();
                         if (channellen > 1000)
                         {
-                            Console.WriteLine("Message's channel size over 1000 bytes closing client");
-                            Console.WriteLine(((IPEndPoint)sock.Client.RemoteEndPoint).Address.ToString());
+                            Console.WriteLine($"Message's channel size over 1000 bytes closing client {Address}");
                             break;
                         }
                         if (type == TCPProvider.MESSAGE_TYPE_PUBLISH)
@@ -248,12 +264,6 @@ namespace LCM.LCM
                 }
                 catch (InvalidOperationException)
                 {
-                }
-                catch (SendQueueFullException)
-                {
-                    Console.WriteLine(((IPEndPoint)sock.Client.RemoteEndPoint).Address.ToString());
-                    Console.WriteLine("Send queue was full, closing socket - subscriptions were: ");
-                    Console.WriteLine(string.Join(", ", subscriptions.Select(s => s.regex)));
                 }
                 catch (OverflowException e)
                 {
